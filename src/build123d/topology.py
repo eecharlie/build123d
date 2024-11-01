@@ -1696,66 +1696,78 @@ class Shape(NodeMixin):
             result = Shape._show_tree(tree[0], show_center)
         return result
 
-    def __add__(self, other: Union[list[Shape], Shape]) -> Self:
-        """fuse shape to self operator +"""
-        others = other if isinstance(other, (list, tuple)) else [other]
+def __add__(self, other: Union[list[Shape], Shape]) -> Self:
+    """fuse shape to self operator +"""
+    if type(self) == Compound:  # Only block generic Compounds
+        raise NotImplementedError(
+            "Addition not supported for generic Compounds. Use Part for 3D objects, "
+            "Sketch for 2D objects, or Curve for 1D objects instead."
+        )
 
-        if not all([type(other)._dim == type(self)._dim for other in others]):
-            raise ValueError("Only shapes with the same dimension can be added")
+    others = other if isinstance(other, (list, tuple)) else [other]
 
-        if self.wrapped is None:
-            if len(others) == 1:
-                new_shape = others[0]
-            else:
-                new_shape = others[0].fuse(*others[1:])
-        elif isinstance(other, Shape) and other.wrapped is None:
-            new_shape = self
+    if not all([type(other)._dim == type(self)._dim for other in others]):
+        raise ValueError("Only shapes with the same dimension can be added")
+
+    if self.wrapped is None:
+        if len(others) == 1:
+            new_shape = others[0]
         else:
-            new_shape = self.fuse(*others)
+            new_shape = others[0].fuse(*others[1:])
+    elif isinstance(other, Shape) and other.wrapped is None:
+        new_shape = self
+    else:
+        new_shape = self.fuse(*others)
 
-        if SkipClean.clean:
-            new_shape = new_shape.clean()
+    if SkipClean.clean:
+        new_shape = new_shape.clean()
 
-        if self._dim == 3:
-            new_shape = Part(new_shape.wrapped)
-        elif self._dim == 2:
-            new_shape = Sketch(new_shape.wrapped)
-        elif self._dim == 1:
-            new_shape = Curve(Compound(new_shape.edges()).wrapped)
+    if self._dim == 3:
+        new_shape = Part(new_shape.wrapped)
+    elif self._dim == 2:
+        new_shape = Sketch(new_shape.wrapped)
+    elif self._dim == 1:
+        new_shape = Curve(Compound(new_shape.edges()).wrapped)
 
-        return new_shape
+    return new_shape
 
-    def __sub__(self, other: Shape) -> Self:
-        """cut shape from self operator -"""
-        others = other if isinstance(other, (list, tuple)) else [other]
+def __sub__(self, other: Shape) -> Self:
+    """cut shape from self operator -"""
+    if type(self) == Compound:  # Only block generic Compounds
+        raise NotImplementedError(
+            "Subtraction not supported for generic Compounds. Use Part for 3D objects, "
+            "Sketch for 2D objects, or Curve for 1D objects instead."
+        )
 
-        for _other in others:
-            if not type(_other)._dim == type(self)._dim and type(_other)._dim < type(self)._dim:
-                raise ValueError(
-                    f"Only shapes with equal or greater dimension can be subtracted: "
-                    f"not {type(self).__name__} ({type(self)._dim}D) and "
-                    f"{type(_other).__name__} ({type(_other)._dim}D)"
-                )
+    others = other if isinstance(other, (list, tuple)) else [other]
 
-        new_shape = None
-        if self.wrapped is None:
-            raise ValueError("Cannot subtract shape from empty compound")
-        if isinstance(other, Shape) and other.wrapped is None:
-            new_shape = self
-        else:
-            new_shape = self.cut(*others)
+    for _other in others:
+        if type(_other)._dim < type(self)._dim:
+            raise ValueError(
+                f"Only shapes with equal or greater dimension can be subtracted: "
+                f"not {type(self).__name__} ({type(self)._dim}D) and "
+                f"{type(_other).__name__} ({type(_other)._dim}D)"
+            )
 
-        if new_shape is not None and SkipClean.clean:
-            new_shape = new_shape.clean()
+    new_shape = None
+    if self.wrapped is None:
+        raise ValueError("Cannot subtract shape from empty compound")
+    if isinstance(other, Shape) and other.wrapped is None:
+        new_shape = self
+    else:
+        new_shape = self.cut(*others)
 
-        if self._dim == 3:
-            new_shape = Part(new_shape.wrapped)
-        elif self._dim == 2:
-            new_shape = Sketch(new_shape.wrapped)
-        elif self._dim == 1:
-            new_shape = Curve(Compound(new_shape.edges()).wrapped)
+    if new_shape is not None and SkipClean.clean:
+        new_shape = new_shape.clean()
 
-        return new_shape
+    if self._dim == 3:
+        new_shape = Part(new_shape.wrapped)
+    elif self._dim == 2:
+        new_shape = Sketch(new_shape.wrapped)
+    elif self._dim == 1:
+        new_shape = Curve(Compound(new_shape.edges()).wrapped)
+
+    return new_shape
 
     def __and__(self, other: Shape) -> Self:
         """intersect shape with self operator &"""

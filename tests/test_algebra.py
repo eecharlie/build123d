@@ -660,30 +660,19 @@ class AlgebraTests(unittest.TestCase):
             _ = rectangle - line
 
     # Compound
-    def test_compound_minus(self):
+    def test_compound_plus(self):
+        """Test that addition of generic Compounds raises NotImplementedError"""
         box = Box(1, 2, 3)
         cylinder = Cylinder(0.2, 5)
-        last_edges = box.edges()
-        result = Compound(box) - Compound(cylinder)
-        self.assertEqual(len(result.edges() - last_edges), 3)
-        self.assertTupleAlmostEquals(
-            result.edges()
-            .sort_by()
-            .filter_by(GeomType.CIRCLE)
-            .first.center(CenterOf.MASS),
-            (0, 0, -1.5),
-            6,
-        )
-        self.assertTupleAlmostEquals(
-            result.edges()
-            .sort_by()
-            .filter_by(GeomType.CIRCLE)
-            .last.center(CenterOf.MASS),
-            (0, 0, 1.5),
-            6,
-        )
-        self.assertTupleAlmostEquals(result.bounding_box().min, (-0.5, -1.0, -1.5), 6)
-        self.assertTupleAlmostEquals(result.bounding_box().max, (0.5, 1.0, 1.5), 6)
+        with self.assertRaises(NotImplementedError):
+            result = Compound(box) + Compound(cylinder)
+
+    def test_compound_minus(self):
+        """Test that subtraction of generic Compounds raises NotImplementedError"""
+        box = Box(1, 2, 3)
+        cylinder = Cylinder(0.2, 5)
+        with self.assertRaises(NotImplementedError):
+            result = Compound(box) - Compound(cylinder)
 
 class LocationTests(unittest.TestCase):
     def test_wheel(self):
