@@ -1730,7 +1730,7 @@ class Shape(NodeMixin):
         others = other if isinstance(other, (list, tuple)) else [other]
 
         for _other in others:
-            if type(_other)._dim < type(self)._dim:
+            if not type(_other)._dim == type(self)._dim and type(_other)._dim < type(self)._dim:
                 raise ValueError(
                     f"Only shapes with equal or greater dimension can be subtracted: "
                     f"not {type(self).__name__} ({type(self)._dim}D) and "
