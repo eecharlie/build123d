@@ -1735,7 +1735,7 @@ class Shape(NodeMixin):
         """Generalized cut shape from self operator -"""
 
         others = other if isinstance(other, (list, tuple)) else [other]
-        
+
         # Only do dimension check for non-Compound shapes
         # or dimensional Compounds (Part, Sketch, Curve)
         if self._dim is not None:
@@ -1756,19 +1756,19 @@ class Shape(NodeMixin):
         else:
             # Do a single boolean operation with all shapes
             cut_op = BRepAlgoAPI_Cut()
-            
+
             args = TopTools_ListOfShape()
             args.Append(self.wrapped)
             cut_op.SetArguments(args)
-            
+
             tools = TopTools_ListOfShape()
             for o in others:
                 tools.Append(o.wrapped)
             cut_op.SetTools(tools)
-            
+
             cut_op.SetRunParallel(True)
             cut_op.Build()
-            
+
             if not cut_op.IsDone():
                 new_shape = None
             else:
@@ -1779,7 +1779,7 @@ class Shape(NodeMixin):
 
         if new_shape is None:
             # Return an empty shape of the appropriate dimensional type
-            if hasattr(type(self), '_dim'):
+            if hasattr(type(self), "_dim"):
                 if self._dim == 3:
                     new_shape = Part([])
                 elif self._dim == 2:
@@ -1790,7 +1790,7 @@ class Shape(NodeMixin):
                 new_shape = Compound([])
         else:
             # Convert to appropriate dimensional type
-            if hasattr(type(self), '_dim'):
+            if hasattr(type(self), "_dim"):
                 if self._dim == 3:
                     new_shape = Part(new_shape.wrapped)
                 elif self._dim == 2:
