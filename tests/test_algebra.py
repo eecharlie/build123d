@@ -661,18 +661,16 @@ class AlgebraTests(unittest.TestCase):
 
     # Compound
     def test_compound_plus(self):
-        """Test that addition of generic Compounds raises NotImplementedError"""
+        """Test that addition of generic Compounds works"""
         box = Box(1, 2, 3)
         cylinder = Cylinder(0.2, 5)
-        with self.assertRaises(NotImplementedError):
-            result = Compound(box) + Compound(cylinder)
+        _ = Compound(box) + Compound(cylinder)
 
     def test_compound_minus(self):
-        """Test that subtraction of generic Compounds raises NotImplementedError"""
+        """Test that subtraction of generic Compounds works"""
         box = Box(1, 2, 3)
         cylinder = Cylinder(0.2, 5)
-        with self.assertRaises(NotImplementedError):
-            result = Compound(box) - Compound(cylinder)
+        _ = Compound(box) - Compound(cylinder)
 
 class LocationTests(unittest.TestCase):
     def test_wheel(self):
