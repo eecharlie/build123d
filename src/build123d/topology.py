@@ -1698,7 +1698,6 @@ class Shape(NodeMixin):
 
     def __add__(self, other: Union[list[Shape], Shape]) -> Self:
         """Generalized fuse shape to self operator +"""
-
         others = other if isinstance(other, (list, tuple)) else [other]
 
         # Only do dimension check for non-Compound shapes
@@ -1713,7 +1712,6 @@ class Shape(NodeMixin):
                         f"{type(_other).__name__} ({type(_other)._dim}D)"
                     )
 
-        new_shape = None
         if self.wrapped is None:
             if len(others) == 1:
                 new_shape = others[0]
@@ -1722,25 +1720,7 @@ class Shape(NodeMixin):
         elif isinstance(other, Shape) and other.wrapped is None:
             new_shape = self
         else:
-            # Do a single boolean operation with all shapes
-            fuse_op = BRepAlgoAPI_Fuse()
-
-            args = TopTools_ListOfShape()
-            args.Append(self.wrapped)
-            fuse_op.SetArguments(args)
-
-            tools = TopTools_ListOfShape()
-            for o in others:
-                tools.Append(o.wrapped)
-            fuse_op.SetTools(tools)
-
-            fuse_op.SetRunParallel(True)
-            fuse_op.Build()
-
-            if not fuse_op.IsDone():
-                new_shape = None
-            else:
-                new_shape = Shape.cast(fuse_op.Shape())
+            new_shape = self.fuse(*others)
 
         if new_shape is not None and SkipClean.clean:
             new_shape = new_shape.clean()
@@ -1757,9 +1737,8 @@ class Shape(NodeMixin):
 
         return new_shape
 
-    def __sub__(self, other: Shape) -> Union[Compound, Part, Sketch, Curve]:
+    def __sub__(self, other: Union[list[Shape], Shape]) -> Self:
         """Generalized cut shape from self operator -"""
-
         others = other if isinstance(other, (list, tuple)) else [other]
 
         # Only do dimension check for non-Compound shapes
@@ -1774,31 +1753,12 @@ class Shape(NodeMixin):
                         f"{type(_other).__name__} ({type(_other)._dim}D)"
                     )
 
-        new_shape = None
         if self.wrapped is None:
-            raise ValueError("Cannot subtract shape from empty compound")
+            raise ValueError(f"Cannot subtract {type(other)} from empty compound")
         if isinstance(other, Shape) and other.wrapped is None:
             new_shape = self
         else:
-            # Do a single boolean operation with all shapes
-            cut_op = BRepAlgoAPI_Cut()
-
-            args = TopTools_ListOfShape()
-            args.Append(self.wrapped)
-            cut_op.SetArguments(args)
-
-            tools = TopTools_ListOfShape()
-            for o in others:
-                tools.Append(o.wrapped)
-            cut_op.SetTools(tools)
-
-            cut_op.SetRunParallel(True)
-            cut_op.Build()
-
-            if not cut_op.IsDone():
-                new_shape = None
-            else:
-                new_shape = Shape.cast(cut_op.Shape())
+            new_shape = self.cut(*others)
 
         if new_shape is not None and SkipClean.clean:
             new_shape = new_shape.clean()
