@@ -1745,32 +1745,19 @@ class Shape(NodeMixin):
         if new_shape is not None and SkipClean.clean:
             new_shape = new_shape.clean()
 
+        dim = self._dim if hasattr(type(self), "_dim") else None
+
         if new_shape is None:
             # Return an empty shape of the appropriate dimensional type
-            if hasattr(type(self), "_dim"):
-                if self._dim == 3:
-                    new_shape = Part([])
-                elif self._dim == 2:
-                    new_shape = Sketch([])
-                elif self._dim == 1:
-                    new_shape = Curve([])
-            else:
-                new_shape = Compound([])
+            new_shape = shapes_by_dim[dim]()
+        elif dim == 1:
+            new_shape = Curve(Compound(new_shape.edges()).wrapped)
         else:
-            # Convert to appropriate dimensional type
-            if hasattr(type(self), "_dim"):
-                if self._dim == 3:
-                    new_shape = Part(new_shape.wrapped)
-                elif self._dim == 2:
-                    new_shape = Sketch(new_shape.wrapped)
-                elif self._dim == 1:
-                    new_shape = Curve(Compound(new_shape.edges()).wrapped)
-            else:
-                new_shape = Compound(new_shape.wrapped)
+            new_shape = shapes_by_dim[dim](new_shape.wrapped)
 
         return new_shape
 
-    def __sub__(self, other: Shape) -> Self:
+    def __sub__(self, other: Shape) -> Union[Compound, Part, Sketch, Curve]:
         """Generalized cut shape from self operator -"""
 
         others = other if isinstance(other, (list, tuple)) else [other]
@@ -1816,28 +1803,15 @@ class Shape(NodeMixin):
         if new_shape is not None and SkipClean.clean:
             new_shape = new_shape.clean()
 
+        dim = self._dim if hasattr(type(self), "_dim") else None
+
         if new_shape is None:
             # Return an empty shape of the appropriate dimensional type
-            if hasattr(type(self), "_dim"):
-                if self._dim == 3:
-                    new_shape = Part([])
-                elif self._dim == 2:
-                    new_shape = Sketch([])
-                elif self._dim == 1:
-                    new_shape = Curve([])
-            else:
-                new_shape = Compound([])
+            new_shape = shapes_by_dim[dim]()
+        elif dim == 1:
+            new_shape = Curve(Compound(new_shape.edges()).wrapped)
         else:
-            # Convert to appropriate dimensional type
-            if hasattr(type(self), "_dim"):
-                if self._dim == 3:
-                    new_shape = Part(new_shape.wrapped)
-                elif self._dim == 2:
-                    new_shape = Sketch(new_shape.wrapped)
-                elif self._dim == 1:
-                    new_shape = Curve(Compound(new_shape.edges()).wrapped)
-            else:
-                new_shape = Compound(new_shape.wrapped)
+            new_shape = shapes_by_dim[dim](new_shape.wrapped)
 
         return new_shape
 
@@ -4657,6 +4631,9 @@ class Curve(Compound):
     def wires(self) -> list[Wire]:
         """A list of wires created from the edges"""
         return Wire.combine(self.edges())
+
+
+shapes_by_dim = {1: Curve, 2: Sketch, 3: Part, None: Compound}
 
 
 class Edge(Mixin1D, Shape):

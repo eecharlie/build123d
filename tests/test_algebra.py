@@ -672,6 +672,7 @@ class AlgebraTests(unittest.TestCase):
         cylinder = Cylinder(0.2, 5)
         _ = Compound(box) - Compound(cylinder)
 
+
 class LocationTests(unittest.TestCase):
     def test_wheel(self):
         plane = Plane.ZX
