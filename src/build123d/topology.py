@@ -1705,7 +1705,7 @@ class Shape(NodeMixin):
         # or dimensional Compounds (Part, Sketch, Curve)
         if self._dim is not None:
             for _other in others:
-                # Skip check if other is a generic Compound 
+                # Skip check if other is a generic Compound
                 if _other._dim is not None and type(_other)._dim != type(self)._dim:
                     raise ValueError(
                         f"Only shapes with the same dimension can be added: "
@@ -1718,7 +1718,7 @@ class Shape(NodeMixin):
             if len(others) == 1:
                 new_shape = others[0]
             else:
-                new_shape = others[0].fuse(*others[1:]) 
+                new_shape = others[0].fuse(*others[1:])
         elif isinstance(other, Shape) and other.wrapped is None:
             new_shape = self
         else:
@@ -1732,7 +1732,7 @@ class Shape(NodeMixin):
             tools = TopTools_ListOfShape()
             for o in others:
                 tools.Append(o.wrapped)
-            fuse_op.SetTools(tools) 
+            fuse_op.SetTools(tools)
 
             fuse_op.SetRunParallel(True)
             fuse_op.Build()
@@ -1757,12 +1757,12 @@ class Shape(NodeMixin):
             else:
                 new_shape = Compound([])
         else:
-            # Convert to appropriate dimensional type  
+            # Convert to appropriate dimensional type
             if hasattr(type(self), "_dim"):
                 if self._dim == 3:
                     new_shape = Part(new_shape.wrapped)
                 elif self._dim == 2:
-                    new_shape = Sketch(new_shape.wrapped) 
+                    new_shape = Sketch(new_shape.wrapped)
                 elif self._dim == 1:
                     new_shape = Curve(Compound(new_shape.edges()).wrapped)
             else:
