@@ -1697,37 +1697,76 @@ class Shape(NodeMixin):
         return result
 
     def __add__(self, other: Union[list[Shape], Shape]) -> Self:
-        """fuse shape to self operator +"""
-        # if type(self) == Compound:  # Only block generic Compounds
-        #     raise NotImplementedError(
-        #         "Addition not supported for generic Compounds. Use Part for 3D objects, "
-        #         "Sketch for 2D objects, or Curve for 1D objects instead."
-        #     )
+        """Generalized fuse shape to self operator +"""
 
         others = other if isinstance(other, (list, tuple)) else [other]
 
-        if not all([type(other)._dim == type(self)._dim for other in others]):
-            raise ValueError("Only shapes with the same dimension can be added")
+        # Only do dimension check for non-Compound shapes
+        # or dimensional Compounds (Part, Sketch, Curve)
+        if self._dim is not None:
+            for _other in others:
+                # Skip check if other is a generic Compound 
+                if _other._dim is not None and type(_other)._dim != type(self)._dim:
+                    raise ValueError(
+                        f"Only shapes with the same dimension can be added: "
+                        f"not {type(self).__name__} ({type(self)._dim}D) and "
+                        f"{type(_other).__name__} ({type(_other)._dim}D)"
+                    )
 
+        new_shape = None
         if self.wrapped is None:
             if len(others) == 1:
                 new_shape = others[0]
             else:
-                new_shape = others[0].fuse(*others[1:])
+                new_shape = others[0].fuse(*others[1:]) 
         elif isinstance(other, Shape) and other.wrapped is None:
             new_shape = self
         else:
-            new_shape = self.fuse(*others)
+            # Do a single boolean operation with all shapes
+            fuse_op = BRepAlgoAPI_Fuse()
 
-        if SkipClean.clean:
+            args = TopTools_ListOfShape()
+            args.Append(self.wrapped)
+            fuse_op.SetArguments(args)
+
+            tools = TopTools_ListOfShape()
+            for o in others:
+                tools.Append(o.wrapped)
+            fuse_op.SetTools(tools) 
+
+            fuse_op.SetRunParallel(True)
+            fuse_op.Build()
+
+            if not fuse_op.IsDone():
+                new_shape = None
+            else:
+                new_shape = Shape.cast(fuse_op.Shape())
+
+        if new_shape is not None and SkipClean.clean:
             new_shape = new_shape.clean()
 
-        if self._dim == 3:
-            new_shape = Part(new_shape.wrapped)
-        elif self._dim == 2:
-            new_shape = Sketch(new_shape.wrapped)
-        elif self._dim == 1:
-            new_shape = Curve(Compound(new_shape.edges()).wrapped)
+        if new_shape is None:
+            # Return an empty shape of the appropriate dimensional type
+            if hasattr(type(self), "_dim"):
+                if self._dim == 3:
+                    new_shape = Part([])
+                elif self._dim == 2:
+                    new_shape = Sketch([])
+                elif self._dim == 1:
+                    new_shape = Curve([])
+            else:
+                new_shape = Compound([])
+        else:
+            # Convert to appropriate dimensional type  
+            if hasattr(type(self), "_dim"):
+                if self._dim == 3:
+                    new_shape = Part(new_shape.wrapped)
+                elif self._dim == 2:
+                    new_shape = Sketch(new_shape.wrapped) 
+                elif self._dim == 1:
+                    new_shape = Curve(Compound(new_shape.edges()).wrapped)
+            else:
+                new_shape = Compound(new_shape.wrapped)
 
         return new_shape
 
