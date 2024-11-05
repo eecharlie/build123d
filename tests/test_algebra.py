@@ -672,6 +672,24 @@ class AlgebraTests(unittest.TestCase):
         cylinder = Cylinder(0.2, 5)
         _ = Compound(box) - Compound(cylinder)
 
+    def test_dimension_mismatch(self):
+        """Test that operations between different dimensional shapes fail"""
+        test_face = Face.make_rect(1, 2)  # 2D
+        test_solid = Solid.make_box(1, 2, 3)  # 3D
+
+        with self.assertRaises(ValueError) as cm:
+            _ = test_face + test_solid
+        self.assertIn(
+            "Only shapes with the same dimension can be added", str(cm.exception)
+        )
+
+        with self.assertRaises(ValueError) as cm:
+            _ = test_solid - test_face
+        self.assertIn(
+            "Only shapes with equal or greater dimension can be subtracted: not Solid (3D) and Face (2D)",
+            str(cm.exception),
+        )
+
 
 class LocationTests(unittest.TestCase):
     def test_wheel(self):
