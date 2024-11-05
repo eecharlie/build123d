@@ -666,11 +666,21 @@ class AlgebraTests(unittest.TestCase):
         cylinder = Cylinder(0.2, 5)
         _ = Compound(box) + Compound(cylinder)
 
+        # Single-dimensional edge case in code path
+        curve1 = Curve(Edge.make_line((1, 2), (4, 4)))
+        curve2 = Curve(Edge.make_circle(2))
+        _ = curve1 + curve2
+
     def test_compound_minus(self):
         """Test that subtraction of generic Compounds works"""
         box = Box(1, 2, 3)
         cylinder = Cylinder(0.2, 5)
         _ = Compound(box) - Compound(cylinder)
+
+        # Single-dimensional edge case in code path
+        curve1 = Curve(Edge.make_line((1, 2), (4, 4)))
+        curve2 = Curve(Edge.make_circle(2))
+        _ = curve1 - curve2
 
     def test_dimension_mismatch(self):
         """Test that operations between different dimensional shapes fail"""
